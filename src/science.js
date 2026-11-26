@@ -27,79 +27,80 @@ for (const a of [1, -1]) for (const b of [1, -1]) {
   NEIGHBORS.push([a, b, 0], [a, 0, b], [0, a, b]);
 }
 
-const key = (i, j, k) => `${i},${j},${k}`;
+// Todas las normales en una lista plana: [nx, ny, nz, familia]
+const ALL_N = [];
+FAMILIES.forEach((f, fi) => NORMALS[f].forEach((n) => ALL_N.push([n[0], n[1], n[2], fi])));
+
+const cache = new Map();
 
 /**
  * Construcción de Wulff atómica: guarda los átomos fcc que están "dentro"
  * de todos los planos. Cada plano está a una distancia proporcional a su γ.
- * Devuelve los átomos de superficie, clasificados por la familia de cara
- * más cercana, y la fracción aproximada de superficie de cada familia.
+ * Devuelve los átomos de superficie, clasificados por la cara en la que están,
+ * y la fracción de área de cada familia (de la forma continua).
  */
 export function wulffParticle(gamma, radius = 9) {
+  const ck = `${gamma['111'].toFixed(3)}|${gamma['100'].toFixed(3)}|${gamma['110'].toFixed(3)}|${radius}`;
+  if (cache.has(ck)) return cache.get(ck);
+
   const gmin = Math.min(gamma['111'], gamma['100'], gamma['110']);
   const scale = radius / gmin;
+  const dist = FAMILIES.map((f) => gamma[f] * scale + 1e-6);
   const lim = Math.ceil(radius * 1.8);
-  const inside = new Map();
+  const N = 2 * lim + 1;
+  const idx = (i, j, k) => ((i + lim) * N + (j + lim)) * N + (k + lim);
+  const inside = new Uint8Array(N * N * N);
+  const list = [];
+  const nN = ALL_N.length;
 
   for (let i = -lim; i <= lim; i++)
     for (let j = -lim; j <= lim; j++)
       for (let k = -lim; k <= lim; k++) {
-        if ((i + j + k) % 2 !== 0) continue;
+        if ((i + j + k) & 1) continue;
         let ok = true;
-        let best = Infinity;
-        let bestFam = '111';
-        for (const f of FAMILIES) {
-          const d = gamma[f] * scale;
-          let m = -Infinity;
-          for (const n of NORMALS[f]) {
-            const p = i * n[0] + j * n[1] + k * n[2];
-            if (p > m) m = p;
-          }
-          if (m > d + 1e-6) { ok = false; break; }
-          const gap = d - m;
-          if (gap < best) { best = gap; bestFam = f; }
+        for (let q = 0; q < nN; q++) {
+          const n = ALL_N[q];
+          if (i * n[0] + j * n[1] + k * n[2] > dist[n[3]]) { ok = false; break; }
         }
-        if (ok) inside.set(key(i, j, k), { p: [i, j, k], fam: bestFam });
+        if (ok) { inside[idx(i, j, k)] = 1; list.push(i, j, k); }
       }
 
   // Plano atómico más externo real de cada cara (no el plano ideal).
-  const outer = {};
-  for (const f of FAMILIES) {
-    outer[f] = NORMALS[f].map((n) => {
-      let m = -Infinity;
-      for (const a of inside.values()) {
-        const d = a.p[0] * n[0] + a.p[1] * n[1] + a.p[2] * n[2];
-        if (d > m) m = d;
-      }
-      return m;
-    });
+  const outer = new Float64Array(nN).fill(-Infinity);
+  for (let a = 0; a < list.length; a += 3) {
+    const i = list[a], j = list[a + 1], k = list[a + 2];
+    for (let q = 0; q < nN; q++) {
+      const n = ALL_N[q];
+      const d = i * n[0] + j * n[1] + k * n[2];
+      if (d > outer[q]) outer[q] = d;
+    }
   }
 
+  const nbOff = NEIGHBORS.map((o) => (o[0] * N + o[1]) * N + o[2]);
   const surface = [];
-  for (const atom of inside.values()) {
-    const [i, j, k] = atom.p;
+  for (let a = 0; a < list.length; a += 3) {
+    const i = list[a], j = list[a + 1], k = list[a + 2];
+    if (Math.abs(i) >= lim - 1 || Math.abs(j) >= lim - 1 || Math.abs(k) >= lim - 1) continue;
+    const c = idx(i, j, k);
     let nb = 0;
-    for (const o of NEIGHBORS) if (inside.has(key(i + o[0], j + o[1], k + o[2]))) nb++;
+    for (let q = 0; q < 12; q++) nb += inside[c + nbOff[q]];
     if (nb === 12) continue;
     // ¿En qué caras está este átomo? (en el plano más externo de esa cara)
-    let hits = 0, fam = null, bestGap = Infinity, nearFam = '111';
-    for (const f of FAMILIES) {
-      NORMALS[f].forEach((n, q) => {
-        const gap = outer[f][q] - (i * n[0] + j * n[1] + k * n[2]);
-        if (gap < 1e-6) { hits++; fam = f; }
-        if (gap < bestGap) { bestGap = gap; nearFam = f; }
-      });
+    let hits = 0, fam = 0, bestGap = Infinity, nearFam = 0;
+    for (let q = 0; q < nN; q++) {
+      const n = ALL_N[q];
+      const gap = outer[q] - (i * n[0] + j * n[1] + k * n[2]);
+      if (gap < 1e-6) { hits++; fam = n[3]; }
+      if (gap < bestGap) { bestGap = gap; nearFam = n[3]; }
     }
-    if (hits === 1) {
-      surface.push({ p: atom.p, fam, edge: false });
-    } else if (hits > 1) {
-      surface.push({ p: atom.p, fam: nearFam, edge: true }); // arista o esquina
-    } else {
-      surface.push({ p: atom.p, fam: nearFam, edge: false }); // capa de abajo, visible
-    }
+    const p = [i, j, k];
+    if (hits === 1) surface.push({ p, fam: FAMILIES[fam], edge: false });
+    else surface.push({ p, fam: FAMILIES[nearFam], edge: hits > 1 }); // arista, o capa de abajo visible
   }
-  // Fracciones de área: de la forma continua (más suave que contar átomos).
-  return { surface, fractions: wulffAreas(gamma), nAtoms: inside.size };
+  const result = { surface, fractions: wulffAreas(gamma), nAtoms: list.length / 3 };
+  if (cache.size > 300) cache.clear();
+  cache.set(ck, result);
+  return result;
 }
 
 /**

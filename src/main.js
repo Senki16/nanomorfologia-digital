@@ -19,8 +19,8 @@ const COLORS = {
   h: new THREE.Color('#FFFFFF'),
 };
 
-const PD_GEO = new THREE.SphereGeometry(0.72, 22, 16);
-const H_GEO = new THREE.SphereGeometry(0.4, 16, 12);
+const PD_GEO = new THREE.SphereGeometry(0.72, 14, 10);
+const H_GEO = new THREE.SphereGeometry(0.4, 10, 8);
 const PD_MAT = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.42, metalness: 0.15 });
 const H_MAT = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0, emissive: 0x2a2f36 });
 
@@ -32,12 +32,12 @@ const pct = (x) => `${Math.round(x * 100)} %`;
 function makeViewer(el, { autoRotate = false, polar = null } = {}) {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: 'high-performance' });
   } catch (e) {
     el.innerHTML = '<p class="fallback">Este navegador no puede mostrar el modelo 3D (WebGL desactivado). El texto de la izquierda explica lo mismo.</p>';
     return null;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   el.appendChild(renderer.domElement);
   const hint = document.createElement('span');
   hint.className = 'hint';
@@ -204,7 +204,7 @@ class ParticleModel {
 /* ------------------------------------------------------------------ */
 function initHero() {
   const el = document.getElementById('v-hero');
-  const v = makeViewer(el, { autoRotate: true });
+  const v = makeViewer(el);
   const slider = document.getElementById('hero-h');
   const out = Object.fromEntries(FAMILIES.map((f) => [f, document.getElementById(`hero-f${f}`)]));
   const writeFractions = (fr) => { for (const f of FAMILIES) out[f].textContent = pct(fr[f]); };
@@ -215,7 +215,7 @@ function initHero() {
   let pending = false;
   const apply = () => {
     pending = false;
-    const x = Number(slider.value);
+    const x = Math.round(Number(slider.value) * 50) / 50; // pasos de 0.02: reutiliza cálculos
     const r = model.update(gammaVsHydrogen(x), x);
     writeFractions(r.fractions);
     v.render();
@@ -572,7 +572,10 @@ function initStrip() {
   const model = new ParticleModel(scene);
   const xs = [0, 0.25, 0.5, 0.75, 1];
   const labels = ['Sin hidrógeno', 'Poco', 'Moderado', 'Bastante', 'Mucho'];
-  xs.forEach((x, i) => {
+  const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 60));
+  let i = 0;
+  const next = () => {
+    const x = xs[i];
     const r = model.update(gammaVsHydrogen(x), 0);
     const d = (model.radius * 1.05) / Math.sin(THREE.MathUtils.degToRad(15));
     camera.position.set(1, 0.75, 1.2).normalize().multiplyScalar(d);
@@ -583,9 +586,11 @@ function initStrip() {
     const f = r.fractions;
     img.alt = `${labels[i]}: (111) ${pct(f['111'])}, (100) ${pct(f['100'])}, (110) ${pct(f['110'])}`;
     snaps[i].append(img);
-  });
-  renderer.dispose();
-  renderer.forceContextLoss();
+    i++;
+    if (i < xs.length) idle(next);
+    else { renderer.dispose(); renderer.forceContextLoss(); }
+  };
+  idle(next);
 }
 
 /* ------------------------------------------------------------------ */
