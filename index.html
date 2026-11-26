@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nanomorfología digital: el proyecto paso a paso</title>
+  <meta name="description" content="Explicación visual y en lenguaje sencillo del proyecto de prácticas: cómo cambia la forma de una nanopartícula de paladio cuando la rodea el hidrógeno." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="hero" id="inicio">
+    <div class="hero-text">
+      <p class="hero-kicker">Proyecto de prácticas · Yonsei University · enero–agosto 2027</p>
+      <h1>¿Qué forma tiene una nanopartícula de paladio cuando la rodea el hidrógeno?</h1>
+      <p class="lead">Esta página explica, paso a paso y con modelos 3D, lo que vas a hacer en el proyecto <em>Digital nanomorphology</em> con el profesor Aloysius Soon. Empieza moviendo el control: añade hidrógeno y mira cómo cambia la partícula.</p>
+
+      <div class="control">
+        <label for="hero-h">Hidrógeno alrededor de la partícula</label>
+        <input id="hero-h" type="range" min="0" max="1" step="0.01" value="0" />
+        <div class="scale"><span>Nada</span><span>Mucho</span></div>
+      </div>
+
+      <ul class="legend" aria-live="polite">
+        <li><span class="swatch f111"></span>Caras (111) <b id="hero-f111">—</b></li>
+        <li><span class="swatch f100"></span>Caras (100) <b id="hero-f100">—</b></li>
+        <li><span class="swatch f110"></span>Caras (110) <b id="hero-f110">—</b></li>
+        <li><span class="swatch h"></span>Átomos de hidrógeno</li>
+      </ul>
+      <p class="note">Ejemplo ilustrativo. Los números reales son justamente lo que vas a calcular.</p>
+    </div>
+    <div class="viewer hero-viewer" id="v-hero" role="img" aria-label="Modelo 3D de una nanopartícula de paladio; arrástralo para girarlo"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="rail" aria-label="Pasos del proyecto">
+      <ol>
+        <li><a href="#paso-1">La partícula y sus caras</a></li>
+        <li><a href="#paso-2">Tres patrones de átomos</a></li>
+        <li><a href="#paso-3">El hidrógeno se pega</a></li>
+        <li><a href="#paso-4">Enero: aprender</a></li>
+        <li><a href="#paso-5">WP1 · ¿Qué superficie gana?</a></li>
+        <li><a href="#paso-6">WP2 · Machine learning</a></li>
+        <li><a href="#paso-7">WP3 · De energías a forma</a></li>
+        <li><a href="#paso-8">WP3 · El mapa de forma</a></li>
+        <li><a href="#paso-9">WP4 · Validar</a></li>
+        <li><a href="#paso-10">Caso: guardar hidrógeno</a></li>
+        <li><a href="#paso-11">Cronograma</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenido">
+
+      <section class="step" id="paso-1">
+        <div class="step-text">
+          <span class="num">1</span>
+          <h2>La partícula y sus caras</h2>
+          <p>Una nanopartícula de paladio (Pd) mide unos pocos nanómetros y tiene miles de átomos ordenados como en un cristal. Por fuera no es una esfera: es un sólido con <strong>caras planas</strong>, como un dado con las esquinas cortadas.</p>
+          <p>Las caras se agrupan en <strong>familias</strong>. Cada familia se nombra con tres números entre paréntesis, los <em>índices de Miller</em>: (111), (100) y (110). Piensa en ellos como una dirección: dicen hacia dónde "mira" la cara dentro del cristal.</p>
+          <p>¿Por qué importa? Porque cada familia tiene los átomos ordenados de forma distinta, y por eso <strong>reacciona distinto</strong> con los gases. Saber qué caras tiene la partícula es saber cómo se va a comportar.</p>
+          <div class="buttons" role="group" aria-label="Resaltar una familia de caras">
+            <button type="button" data-fam="all" aria-pressed="true">Todas</button>
+            <button type="button" data-fam="111" aria-pressed="false"><span class="swatch f111"></span>(111)</button>
+            <button type="button" data-fam="100" aria-pressed="false"><span class="swatch f100"></span>(100)</button>
+            <button type="button" data-fam="110" aria-pressed="false"><span class="swatch f110"></span>(110)</button>
+          </div>
+        </div>
+        <div class="viewer" id="v-facets" role="img" aria-label="Nanopartícula con sus caras coloreadas por familia"></div>
+      </section>
+
+      <section class="step" id="paso-2">
+        <div class="step-text">
+          <span class="num">2</span>
+          <h2>Cada cara tiene su propio patrón de átomos</h2>
+          <p>Si haces "zoom" en una cara verás una superficie plana de átomos. En el proyecto se modela como una <strong>lámina</strong> (en inglés, <em>slab</em>): unas pocas capas de átomos que se repiten hacia los lados.</p>
+          <ul class="facts">
+            <li><span class="swatch f111"></span><b>(111):</b> triángulos muy apretados. Es la cara más compacta y la más estable del Pd limpio.</li>
+            <li><span class="swatch f100"></span><b>(100):</b> cuadrados. Un poco más abierta.</li>
+            <li><span class="swatch f110"></span><b>(110):</b> filas con canales entre ellas. Es la más abierta y la que más "quiere" reaccionar.</li>
+          </ul>
+          <div class="tabs" role="tablist" aria-label="Elegir superficie">
+            <button role="tab" type="button" data-face="111" aria-selected="true">(111)</button>
+            <button role="tab" type="button" data-face="100" aria-selected="false">(100)</button>
+            <button role="tab" type="button" data-face="110" aria-selected="false">(110)</button>
+          </div>
+          <p class="note">En color: la capa de arriba. En gris: las capas de abajo.</p>
+        </div>
+        <div class="viewer" id="v-slab" role="img" aria-label="Lámina de átomos de la superficie seleccionada"></div>
+      </section>
+
+      <section class="step" id="paso-3">
+        <div class="step-text">
+          <span class="num">3</span>
+          <h2>El hidrógeno se pega a la superficie</h2>
+          <p>El gas hidrógeno viene en parejas (H₂). Al tocar el paladio, la pareja se separa y cada átomo de H se acomoda en un <strong>hueco</strong> entre los átomos de Pd. Esto se llama <em>adsorción</em>.</p>
+          <p>La <strong>cobertura</strong> dice qué parte de los huecos está ocupada: ¼, ½ o una capa completa. Cada cobertura es una <strong>estructura superficial</strong> distinta, y cada una tiene su propia energía.</p>
+          <div class="control">
+            <label for="cov">Cobertura de hidrógeno en la cara (100)</label>
+            <input id="cov" type="range" min="0" max="3" step="1" value="0" aria-valuetext="Limpia" />
+            <div class="scale four"><span>Limpia</span><span>¼</span><span>½</span><span>Completa</span></div>
+          </div>
+          <p class="note">El Pd también puede tragarse hidrógeno hacia adentro (formar un <em>hidruro</em>). En el proyecto eso queda como límite: primero se estudia la superficie.</p>
+        </div>
+        <div class="viewer" id="v-hydrogen" role="img" aria-label="Superficie de paladio con átomos de hidrógeno en los huecos"></div>
+      </section>
+
+      <section class="step text-only" id="paso-4">
+        <div class="step-text">
+          <span class="num">4</span>
+          <h2>Enero: aprender las herramientas</h2>
+          <p>El primer mes es de aprendizaje. Vas a estudiar lo básico de <strong>DFT</strong> (la teoría del funcional de la densidad), que es una forma de calcular, con la mecánica cuántica, la energía de un grupo de átomos. Es como una "calculadora cuántica": muy precisa, pero lenta.</p>
+          <ul class="checklist">
+            <li>Leer los capítulos básicos de un libro práctico de DFT (Sholl y Steckel).</li>
+            <li>Aprender a armar una lámina de átomos y a correr un cálculo con las herramientas del grupo.</li>
+            <li>Ya en febrero, primer cálculo real: las superficies del Pd <strong>limpio</strong>. Como ya están publicadas, sirven para comprobar que tus cálculos dan bien.</li>
+          </ul>
+          <p>Tu formación en ingeniería mecánica ayuda: la termodinámica, los materiales y los métodos numéricos son la base de todo lo que sigue.</p>
+        </div>
+      </section>
+
+      <section class="step" id="paso-5">
+        <div class="step-text">
+          <span class="num">5</span>
+          <p class="wp">WP1 · febrero–marzo</p>
+          <h2>¿Qué superficie gana? El diagrama de fase superficial</h2>
+          <p>Para cada estructura (limpia, ¼, ½, completa) calculas con DFT su <strong>energía superficial</strong> (γ): lo que "cuesta" tener esa superficie. <strong>Gana la que cuesta menos.</strong></p>
+          <p>Pero el resultado depende del ambiente. Con más presión de H₂ (o menos temperatura), al hidrógeno le "conviene" más pegarse. Eso se mide con el <strong>potencial químico</strong> del hidrógeno (Δμ<sub>H</sub>): un solo número que resume la temperatura y la presión del gas.</p>
+          <p>Cada estructura es una línea. Mueve el control y mira cuál queda más abajo: esa es la que existe en esas condiciones. El dibujo completo es un <strong>diagrama de fase superficial</strong>, el resultado principal de superficie del proyecto.</p>
+          <div class="control">
+            <label for="dmu">Cantidad de hidrógeno en el ambiente (Δμ<sub>H</sub>)</label>
+            <input id="dmu" type="range" min="-1" max="0.15" step="0.01" value="-0.8" />
+            <div class="scale"><span>Poco H (alta temperatura, baja presión)</span><span>Mucho H</span></div>
+          </div>
+          <p class="readout" aria-live="polite">Estructura más estable: <b id="dmu-out">—</b></p>
+          <p class="note">Líneas ilustrativas para la cara (100). Fórmula usada en la propuesta: γ = (1/2A)[G<sub>lámina</sub> − N<sub>Pd</sub>·g<sub>Pd</sub> − N<sub>H</sub>·μ<sub>H</sub>].</p>
+        </div>
+        <figure class="chart-wrap">
+          <svg id="phase-chart" viewBox="0 0 560 470" role="img" aria-label="Diagrama de fase superficial ilustrativo: energía de cada estructura contra la cantidad de hidrógeno"></svg>
+        </figure>
+      </section>
+
+      <section class="step" id="paso-6">
+        <div class="step-text">
+          <span class="num">6</span>
+          <p class="wp">WP2 · abril–junio</p>
+          <h2>Machine learning: un atajo entrenado con DFT</h2>
+          <p>DFT es preciso pero lento: cada estructura puede tardar horas. Para probar muchas estructuras se usa un <strong>MLIP</strong> (potencial interatómico de machine learning): un modelo que aprendió de miles de cálculos DFT y predice energías en segundos.</p>
+          <p>El plan: tomar un MLIP <strong>ya entrenado</strong>, compararlo con tus cálculos DFT y, si se equivoca, mejorarlo con <strong>active learning</strong>. Varios modelos "votan"; donde no se ponen de acuerdo, haces un cálculo DFT nuevo y se lo enseñas.</p>
+          <p>No basta con que el error promedio sea pequeño: el modelo tiene que acertar <strong>cuál estructura gana</strong>. Y si ningún modelo sirve, hay plan B: los diagramas y las formas se hacen solo con DFT.</p>
+          <button type="button" class="action" id="ml-run">Ver un ciclo de active learning</button>
+        </div>
+        <figure class="chart-wrap">
+          <svg id="ml-loop" viewBox="0 0 560 420" role="img" aria-label="Ciclo de active learning entre DFT y el modelo de machine learning"></svg>
+          <figcaption id="ml-caption" aria-live="polite">El ciclo se repite hasta que el modelo acierta.</figcaption>
+        </figure>
+      </section>
+
+      <section class="step" id="paso-7">
+        <div class="step-text">
+          <span class="num">7</span>
+          <p class="wp">WP3 · julio</p>
+          <h2>Construcción de Wulff: de energías a forma</h2>
+          <p>Con las energías de cada cara ya puedes "construir" la partícula. La regla de Wulff es simple: <strong>cada cara se coloca a una distancia del centro proporcional a su energía</strong>. Las caras baratas quedan cerca del centro y se hacen grandes; las caras caras quedan lejos y desaparecen.</p>
+          <p>Prueba tú: baja la energía de una familia y mira cómo crece.</p>
+          <div class="sliders">
+            <div class="control">
+              <label for="g111"><span class="swatch f111"></span>Energía de (111): <b id="g111-v">1.00</b></label>
+              <input id="g111" type="range" min="0.85" max="1.4" step="0.01" value="1.00" />
+            </div>
+            <div class="control">
+              <label for="g100"><span class="swatch f100"></span>Energía de (100): <b id="g100-v">1.12</b></label>
+              <input id="g100" type="range" min="0.85" max="1.4" step="0.01" value="1.12" />
+            </div>
+            <div class="control">
+              <label for="g110"><span class="swatch f110"></span>Energía de (110): <b id="g110-v">1.20</b></label>
+              <input id="g110" type="range" min="0.85" max="1.4" step="0.01" value="1.20" />
+            </div>
+          </div>
+          <div class="bars" aria-live="polite">
+            <div class="bar"><span class="swatch f111"></span><span class="bar-track"><span class="bar-fill f111" id="b111"></span></span><b id="p111">—</b></div>
+            <div class="bar"><span class="swatch f100"></span><span class="bar-track"><span class="bar-fill f100" id="b100"></span></span><b id="p100">—</b></div>
+            <div class="bar"><span class="swatch f110"></span><span class="bar-track"><span class="bar-fill f110" id="b110"></span></span><b id="p110">—</b></div>
+          </div>
+          <p class="note">Las barras muestran qué parte de la superficie ocupa cada familia (aproximado).</p>
+        </div>
+        <div class="viewer" id="v-wulff" role="img" aria-label="Partícula construida con la regla de Wulff a partir de las energías elegidas"></div>
+      </section>
+
+      <section class="step wide" id="paso-8">
+        <div class="step-text">
+          <span class="num">8</span>
+          <p class="wp">WP3 · julio</p>
+          <h2>El mapa de forma</h2>
+          <p>Si repites la construcción de Wulff para muchas condiciones de hidrógeno, obtienes un <strong>mapa de morfología</strong>: qué forma tiene la partícula en cada ambiente. Es el resultado de "nanomorfología digital" que pide el título del proyecto.</p>
+        </div>
+        <div class="strip" id="shape-strip" aria-label="Formas de la partícula de menos a más hidrógeno">
+          <figure><div class="snap"></div><figcaption>Sin hidrógeno</figcaption></figure>
+          <figure><div class="snap"></div><figcaption>Poco</figcaption></figure>
+          <figure><div class="snap"></div><figcaption>Moderado</figcaption></figure>
+          <figure><div class="snap"></div><figcaption>Bastante</figcaption></figure>
+          <figure><div class="snap"></div><figcaption>Mucho</figcaption></figure>
+        </div>
+        <p class="note strip-note">Formas ilustrativas. Válidas solo para las tres familias de caras estudiadas.</p>
+      </section>
+
+      <section class="step text-only" id="paso-9">
+        <div class="step-text">
+          <span class="num">9</span>
+          <p class="wp">WP4 · julio</p>
+          <h2>Validar: ¿el atajo dice lo mismo que DFT?</h2>
+          <p>Un resultado solo vale si se puede comprobar. Por eso vas a comparar:</p>
+          <ul class="checklist">
+            <li>Las formas que salen con el modelo de machine learning contra las que salen <strong>solo con DFT</strong>.</li>
+            <li>Tus resultados contra lo que ya está <strong>publicado</strong> sobre el Pd, incluidos los trabajos del propio grupo del profesor Soon.</li>
+          </ul>
+          <p>Si sobra tiempo, el MLIP permite simular partículas completas, átomo por átomo, para ver dónde falla la regla de Wulff, por ejemplo en bordes y esquinas.</p>
+        </div>
+      </section>
+
+      <section class="step text-only" id="paso-10">
+        <div class="step-text">
+          <span class="num">10</span>
+          <p class="wp">Agosto · caso de estudio</p>
+          <h2>Para qué sirve: guardar hidrógeno</h2>
+          <p>El hidrógeno es un combustible limpio, pero es difícil de guardar. El paladio es como una <strong>esponja de hidrógeno</strong>: lo absorbe y lo suelta. Es caro para usarlo a gran escala, pero es el <strong>sistema modelo</strong> para entender cómo funcionan estos materiales.</p>
+          <p>Se sabe por experimentos que la forma importa: las partículas de Pd con caras {110} sueltan más hidrógeno que los cubos. Con tus mapas de forma vas a explorar esa relación entre caras y hidrógeno, buscando <strong>tendencias</strong> (la capacidad total también depende de otras cosas, como el hidruro y el tamaño).</p>
+          <p>Si el método funciona con Pd, el siguiente paso sería aplicarlo a materiales prácticos para guardar hidrógeno, como el <strong>magnesio (Mg)</strong> y el <strong>TiFe</strong>.</p>
+        </div>
+      </section>
+
+      <section class="step wide" id="paso-11">
+        <div class="step-text">
+          <span class="num">11</span>
+          <h2>Cronograma: enero a agosto de 2027</h2>
+        </div>
+        <div class="timeline" role="table" aria-label="Cronograma de la práctica">
+          <div class="months" role="row">
+            <span role="columnheader">Ene</span><span role="columnheader">Feb</span><span role="columnheader">Mar</span><span role="columnheader">Abr</span><span role="columnheader">May</span><span role="columnheader">Jun</span><span role="columnheader">Jul</span><span role="columnheader">Ago</span>
+          </div>
+          <div class="track" role="row"><span class="task t-learn" style="--s:1;--e:2" role="cell">Aprender DFT y herramientas</span></div>
+          <div class="track" role="row"><span class="task t-wp1" style="--s:2;--e:4" role="cell">WP1 · Pd limpio, luego Pd + H; diagramas de fase</span></div>
+          <div class="track" role="row"><span class="task t-wp2" style="--s:4;--e:7" role="cell">WP2 · Machine learning (MLIP)</span></div>
+          <div class="track" role="row"><span class="task t-wp3" style="--s:7;--e:8" role="cell">WP3–4 · Formas y validación</span></div>
+          <div class="track" role="row"><span class="task t-case" style="--s:8;--e:9" role="cell">Caso H₂ e informe</span></div>
+        </div>
+      </section>
+
+      <section class="glossary" id="glosario">
+        <h2>Palabras clave, en simple</h2>
+        <dl>
+          <div><dt>DFT</dt><dd>Método de mecánica cuántica para calcular la energía de un grupo de átomos. Preciso, pero lento.</dd></div>
+          <div><dt>Energía superficial (γ)</dt><dd>Lo que "cuesta" tener una superficie. Menor γ = superficie más estable.</dd></div>
+          <div><dt>Potencial químico (μ)</dt><dd>Un número que resume cuánto "empuja" el gas a pegarse. Depende de la temperatura y la presión.</dd></div>
+          <div><dt>Termodinámica ab initio</dt><dd>La forma de unir los cálculos DFT con la temperatura y la presión reales del gas.</dd></div>
+          <div><dt>Diagrama de fase superficial</dt><dd>Mapa que dice qué estructura de superficie gana en cada condición.</dd></div>
+          <div><dt>Construcción de Wulff</dt><dd>Regla para obtener la forma de un cristal a partir de las energías de sus caras.</dd></div>
+          <div><dt>MLIP</dt><dd>Modelo de machine learning entrenado con DFT que predice energías muy rápido.</dd></div>
+          <div><dt>Active learning</dt><dd>Mejorar el modelo calculando con DFT justo los casos donde duda.</dd></div>
+          <div><dt>Cobertura</dt><dd>Qué parte de los huecos de la superficie tiene hidrógeno.</dd></div>
+          <div><dt>Hidruro</dt><dd>Cuando el hidrógeno entra al interior del metal y forma un compuesto nuevo (PdHₓ).</dd></div>
+        </dl>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <p>Basado en la propuesta de investigación de David Zuluaga Henao para el profesor Aloysius Soon (Yonsei University), noviembre de 2026. Los números de los modelos de esta página son ilustrativos: sirven para entender la idea, no son resultados.</p>
+    <p>Lecturas clave: Soon y col., <a href="https://doi.org/10.1103/PhysRevB.77.125423">Phys. Rev. B 77, 125423 (2008)</a>; Yoo y col., <a href="https://doi.org/10.1039/C4CP02384F">Phys. Chem. Chem. Phys. 16, 18570 (2014)</a>; Reuter y Scheffler, <a href="https://doi.org/10.1103/PhysRevB.65.035406">Phys. Rev. B 65, 035406 (2001)</a>; Noordhoek y Bartel, <a href="https://doi.org/10.1039/D3NR06468A">Nanoscale 16, 6365 (2024)</a>.</p>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
